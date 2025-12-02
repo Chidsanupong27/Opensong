@@ -1,36 +1,23 @@
+// Dropdown.jsx
 export default function Dropdown({
-  label,       // ข้อความ label เช่น "ผู้จัดการ"
-  icon,        // ไอคอนด้านหน้าข้อความ (ส่งมาจาก parent)
-  value,       // ค่าที่ถูกเลือกปัจจุบัน
-  onChange,    // ฟังก์ชันเมื่อมีการเปลี่ยนค่า
-  options,     // รายการตัวเลือกทั้งหมด
-  darkMode = false // ถ้า true → เป็นสไตล์สำหรับพื้นที่พื้นหลังเข้ม (เช่น CardRight)
+  label,
+  icon,
+  value,
+  onChange,
+  options,
 }) {
   return (
-    <div className="mb-6">
-      {/* Label + Icon */}
-      <label
-        className={`flex items-center gap-2 mb-2 text-sm font-medium ${
-          darkMode ? "text-white" : "text-gray-700" // darkMode = สีขาว, ปกติ = สีเทาเข้ม
-        }`}
-      >
+    <div className="mb-4">
+      <label className="flex items-center gap-2 mb-1 text-sm font-medium text-gray-700">
         {icon}
         {label}
       </label>
 
-      {/* Select Box */}
       <select
-        className={`w-full p-3 rounded-lg border text-sm ${
-          // ตัว select เมื่ออยู่ใน dark mode → bg ขาว / ตัวหนังสือเข้ม
-          // ถ้าไม่ใช่ dark mode → สีเทาอ่อน
-          darkMode
-            ? "bg-white text-gray-900"
-            : "bg-gray-100 text-gray-800"
-        }`}
-        value={value}                 // ค่าที่ถูกเลือกใน dropdown
-        onChange={(e) => onChange(e.target.value)} // ส่งค่าใหม่กลับไปยัง parent
+        className="w-full p-2.5 rounded-lg border bg-gray-50 text-gray-800 text-sm"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
       >
-        {/* วนลูปแสดง <option> ทั้งหมดที่ส่งเข้ามา */}
         {options.map((o, i) => (
           <option key={i} value={o}>
             {o}
@@ -40,8 +27,6 @@ export default function Dropdown({
     </div>
   );
 }
-
-
 
 
 // component Dropdown ใช้เลือกชื่อบุคคลในแต่ละ Role

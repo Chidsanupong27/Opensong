@@ -1,34 +1,49 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { sendVerifyEmail } from "../utils/sendEmail";
 
 import Header from "../components/Header";
 import Stepper from "../components/Stepper";
 import CommitteeSelector from "../components/CommitteeSelector";
 import WorkModeBadge from "../components/WorkModeBadge";
 import ValidationAlert from "../components/ValidationAlert";
-
+import CommitteeInfoBox from "../components/CommitteeInfoBox";
+import CommitteeVerifyButton from "../components/CommitteeVerifyButton";
+import CommitteeVerifyModal from "../components/CommitteeVerifyModal";
+import Button from "../components/Button";
 import getCommitteeConfig from "../components/CommitteeConfig";
 
 export default function CommitteePage() {
   const navigate = useNavigate();
 
-  // Mock Backend
+  // 🎯 Mock Backend
   const backendData = {
-    mode: "urgent",   // normal | urgent
-    amount: 2099,     // < 200000 หรือ >= 200000
+    mode: "normal",
+    amount: 20005555,
   };
 
   const config = getCommitteeConfig(backendData);
 
-  // state ที่เก็บค่าที่เลือก → ตั้งค่า default ให้ manager
+  const [showVerify, setShowVerify] = useState(false);
+
   const [selected, setSelected] = useState({
     manager: "นาย A เจ้าของงาน",
   });
 
-  // เพื่อเริ่มแสดงข้อความ validate หลังจากกด submit
+  const committeeEmails = {
+    manager: { name: "นาย A", email: "a@gmail.com" },
+    unitManager: { name: "นาย B", email: "b@gmail.com" },
+    engineer: { name: "นาย C", email: "c@gmail.com" },
+    service: { name: "นาย D", email: "d@gmail.com" },
+    purchasing: { name: "นาย E", email: "e@gmail.com" },
+  };
+
+  function generateOTP() {
+    return Math.floor(10000 + Math.random() * 90000).toString(); // 5 หลัก
+  }
+
   const [touchedSubmit, setTouchedSubmit] = useState(false);
 
-  // รับค่าจาก dropdown
   const handleUpdate = (key, value) => {
     setSelected((prev) => ({ ...prev, [key]: value }));
   };
@@ -36,13 +51,9 @@ export default function CommitteePage() {
   // -------------------------
   // ✅ Validation Logic
   // -------------------------
-
-  // ถ้า amount >= 200k → ต้องเลือกครบ 5 คนเสมอ
-  // ถ้า amount < 200k → เลือกขั้นต่ำ 3 คนแรก (manager, unitManager, engineer)
-  const requiredFields =
-    backendData.amount >= 200000
-      ? config.roles.map((r) => r.key) // require ทั้ง 5 ช่อง
-      : config.roles.slice(0, 3).map((r) => r.key); // require แค่ 3 ช่องแรก
+  const requiredFields = config.roles
+    .filter((role) => role.required)
+    .map((role) => role.key);
 
   const missing = requiredFields.filter((key) => !selected[key]);
   const hasError = missing.length > 0;
@@ -52,17 +63,10 @@ export default function CommitteePage() {
       <Stepper activeStep={1} />
       <Header />
 
-      {/*  แสดงชนิดงาน */}
       <WorkModeBadge mode={config.mode} amount={config.amount} />
+      <CommitteeInfoBox />
+      <ValidationAlert show={touchedSubmit && hasError} />
 
-      {/* แจ้งเตือนเฉพาะเมื่อกด submit แล้วไม่ครบ */}
-      <ValidationAlert
-        show={touchedSubmit && hasError}
-        mode={config.mode}
-        isHighValue={config.isHighValue}
-      />
-
-      {/* ส่วนเลือกคณะกรรมการ */}
       <CommitteeSelector
         config={config}
         selected={selected}
@@ -71,31 +75,112 @@ export default function CommitteePage() {
 
       {/* ปุ่มควบคุม */}
       <div className="max-w-6xl mx-auto flex justify-between px-4 mt-10 mb-20">
-        {/* Back */}
-        <button className="bg-red-600 text-white px-6 py-3 rounded-xl">
-          ย้อนกลับ
-        </button>
+        {/* 🔙 Back button (ใช้ปุ่มแบบ premium) */}
+        <div onClick={() => navigate(-1)}>
+          <Button type="back" />
+        </div>
 
-        {/* Submit */}
+        {/* 🔵 ปุ่มตรวจสอบสถานะ */}
+        <CommitteeVerifyButton onOpen={() => setShowVerify(true)} />
+
+        {/* 🟢 ปุ่มยืนยัน */}
         <button
-          onClick={() => {
-            setTouchedSubmit(true); // เริ่ม validate ตอนกด submit
+          onClick={async () => {
+            setTouchedSubmit(true);
+            if (hasError) return;
 
-            if (hasError) return; // ถ้าไม่ครบ → หยุด
+            // 1) generate OTP
+            const otp = generateOTP();
 
-            navigate("/status"); // ไปหน้าต่อไปเมื่อครบ
-          }}
-          className={`px-6 py-3 rounded-xl text-white transition-all
-            ${
-              touchedSubmit && hasError
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700"
+            // 2) ส่งเมลให้ทุกตำแหน่งที่เลือกไว้
+            try {
+              for (const roleKey of Object.keys(committeeEmails)) {
+                const person = committeeEmails[roleKey];
+
+                await sendVerifyEmail({
+                  toEmail: person.email,
+                  toName: person.name,
+                  otp: otp,
+                });
+
+                console.log("ส่งเมลแล้ว →", person.email);
+              }
+
+              alert("ส่งอีเมลยืนยันให้กรรมการทุกคนแล้ว!");
+
+              // TODO: ไปหน้าต่อไป หรือเปิด modal verify
+            } catch (err) {
+              console.error("ส่งเมลไม่สำเร็จ", err);
+              alert("เกิดข้อผิดพลาดในการส่งอีเมล!");
             }
-          `}
+          }}
+          className={`
+    px-6 py-3 rounded-xl text-white transition-all
+    ${
+      touchedSubmit && hasError
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-green-600 hover:bg-green-700"
+    }
+  `}
         >
-          บันทึก →
+          ยืนยัน →
         </button>
       </div>
+
+      {/* Modal ตรวจสอบสถานะ */}
+      <CommitteeVerifyModal
+        open={showVerify}
+        onClose={() => setShowVerify(false)}
+        roles={[
+          {
+            key: "manager",
+            label: "ผู้จัดการเจ้าของงาน",
+            name: "นาย A",
+            status: "confirmed",
+          },
+          {
+            key: "unitManager",
+            label: "ผู้จัดการต้นสังกัด",
+            name: "นาย B",
+            status: "confirmed",
+          },
+          {
+            key: "engineer",
+            label: "วิศวกร",
+            name: "นาย C",
+            status: "confirmed",
+          },
+          {
+            key: "service",
+            label: "บริการจ้างเหมา",
+            name: "นาย D",
+            status: "confirmed",
+          },
+          {
+            key: "purchasing",
+            label: "พัสดุ",
+            name: "นาย E",
+            status: "confirmed",
+          },
+        ]}
+      />
+
+      {/* ปุ่มเทสการส่งเมลล์ Mockup ไว้ให้เห็นภาพ */}
+      <button
+        onClick={() => {
+          sendVerifyEmail({
+            toEmail: "อีเมลของคุณ@gmail.com",
+            toName: "ชื่อของคุณ",
+            otp: "12345",
+          })
+            .then(() => alert("ส่งอีเมลสำเร็จ!"))
+            .catch((err) => alert("ส่งไม่สำเร็จ: " + err));
+        }}
+        className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+      >
+        ทดสอบส่งอีเมล
+      </button>
+      
     </div>
   );
 }

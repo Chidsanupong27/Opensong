@@ -1,5 +1,6 @@
-import Dropdown from "./Dropdown";
+// CommitteeSelector.jsx
 import { UserCircle, Building2, Wrench, Package, UserRound } from "lucide-react";
+import CommitteeRoleItem from "./CommitteeRoleItem";
 
 export default function CommitteeSelector({ config, selected, onChange }) {
   const { roles } = config;
@@ -13,45 +14,21 @@ export default function CommitteeSelector({ config, selected, onChange }) {
   };
 
   return (
-    <div className="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow mt-6">
+    <div className="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow mt-4">
       <h2 className="text-xl font-bold text-gray-800 mb-4">
-        รายชื่อคณะกรรมการ 
+        รายชื่อคณะกรรมการ
       </h2>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-        {roles.map((role) => {
-          const value = selected[role.key] || "";
-
-          // Manager — ใช้ input disabled
-          if (role.key === "manager") {
-            return (
-              <div key={role.key}>
-                <label className="flex items-center gap-2 mb-2 font-medium">
-                  {iconMap[role.key]}
-                  {role.label}
-                </label>
-                <input
-                  disabled
-                  className="w-full p-3 border bg-gray-100 rounded-lg"
-                  value={role.options[0]}
-                />
-              </div>
-            );
-          }
-
-          // Other roles — dropdown
-          return (
-            <Dropdown
-              key={role.key}
-              icon={iconMap[role.key]}
-              label={role.label}
-              value={value}
-              disabled={role.locked}
-              onChange={(v) => onChange(role.key, v)}
-              options={role.options}
-            />
-          );
-        })}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {roles.map((role) => (
+          <CommitteeRoleItem
+            key={role.key}
+            role={role}
+            icon={iconMap[role.key]}
+            value={selected[role.key]}
+            onChange={(val) => onChange(role.key, val)}
+          />
+        ))}
       </div>
     </div>
   );

@@ -1,40 +1,30 @@
 // WorkModeBadge.jsx
-
 export default function WorkModeBadge({ mode, amount }) {
   const isHighValue = amount >= 200000;
 
-  // กล่องแบบ minimal
-  const Badge = ({ text, color }) => (
-    <span
-      className={`px-5 py-2 text-sm font-medium rounded-full ${color}`}
-    >
-      {text}
-    </span>
-  );
+  const modeText =
+    mode === "urgent" ? "งานเร่งด่วน" : "งานปกติ";
+
+  const modeColor =
+    mode === "urgent"
+      ? "bg-orange-100 text-orange-700 border-orange-200"
+      : "bg-blue-100 text-blue-700 border-blue-200";
+
+  const highValueText = "มูลค่าสูง";
+  const highValueColor = "bg-red-50 text-red-700 border-red-200";
 
   return (
-    <div className="max-w-6xl mx-auto mt-4 mb-6 flex gap-3 justify-start">
-      {/* งานปกติ หรือ งานเร่งด่วน */}
-      {mode === "normal" && (
-        <Badge
-          text="งานปกติ"
-          color="bg-blue-600 text-white"
-        />
-      )}
+    <div className="max-w-6xl mx-auto mt-2 mb-3 flex items-center gap-2">
+      {/* ป้ายโหมดงาน */}
+      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${modeColor}`}>
+        {modeText}
+      </span>
 
-      {mode === "urgent" && (
-        <Badge
-          text="งานเร่งด่วน"
-          color="bg-orange-500 text-white"
-        />
-      )}
-
-      {/* งานมูลค่าสูง (แสดงเมื่อ ≥ 200000) */}
+      {/* ถ้าเป็นงานมูลค่าสูง → แสดงป้ายเพิ่ม */}
       {isHighValue && (
-        <Badge
-          text="งานมูลค่าสูง"
-          color="bg-red-500 text-white"
-        />
+        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${highValueColor}`}>
+          {highValueText}
+        </span>
       )}
     </div>
   );
