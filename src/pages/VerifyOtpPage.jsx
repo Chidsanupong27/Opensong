@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 export default function VerifyOtpPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   const email = searchParams.get("email");
   const role = searchParams.get("role");
 
@@ -10,7 +12,15 @@ export default function VerifyOtpPage() {
   const [timeLeft, setTimeLeft] = useState(300); // 5 นาที
   const [status, setStatus] = useState("idle"); // idle | success | error
 
-  // ⏳ Countdown ลดเวลา
+  // ป้องกัน error เวลา refresh แล้วไม่มี role
+  useEffect(() => {
+    if (!email || !role) {
+      alert("ลิงก์ไม่ถูกต้อง หรือหมดอายุ");
+      navigate("/"); // กลับหน้าแรก
+    }
+  }, [email, role, navigate]);
+
+  //  Countdown ลดเวลา
   useEffect(() => {
     if (timeLeft <= 0) return;
 
@@ -27,21 +37,36 @@ export default function VerifyOtpPage() {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  // 📌 เมื่อกดยืนยัน OTP
+  // 📌 เมื่อกดปุ่มยืนยัน OTP
   const handleVerify = async () => {
     if (otp.length !== 5) {
       setStatus("error");
       return;
     }
 
-    // TODO: ต่อ API จริง
-    const isCorrect = otp === "12345"; // mock test
+    // mock test: OTP = 12345
+    const isCorrect = otp === "12345";
 
-    if (isCorrect) {
-      setStatus("success");
-    } else {
+    if (!isCorrect) {
       setStatus("error");
+      return;
     }
+
+    // ====== ✔ บันทึกสถานะลง localStorage ======
+    const prev = JSON.parse(localStorage.getItem("committee_status") || "{}");
+
+    const updated = {
+      ...prev,
+      [role]: "confirmed",
+    };
+
+    localStorage.setItem("committee_status", JSON.stringify(updated));
+    setStatus("success");
+
+    // ให้เวลาแสดงผล 1.5 วินาที แล้ว redirect
+    setTimeout(() => {
+      navigate("/status");
+    }, 2000);
   };
 
   return (
@@ -53,13 +78,13 @@ export default function VerifyOtpPage() {
         </h2>
 
         <p className="text-center text-gray-600 mt-2">
-          โปรดยืนยันรหัสที่ส่งไปยังอีเมลของคุณ
+          โปรดกรอกรหัส OTP ที่ส่งไปยังอีเมลของคุณ
         </p>
 
-        {/* Email / Role Display */}
+        {/* Display Email + Role */}
         <div className="mt-6 bg-gray-100 p-4 rounded-lg text-gray-700 text-sm">
-          <p><strong>อีเมล:</strong> {email || "-"}</p>
-          <p><strong>หน้าที่:</strong> {role || "-"}</p>
+          <p><strong>อีเมล:</strong> {email}</p>
+          <p><strong>หน้าที่:</strong> {role}</p>
         </div>
 
         {/* OTP Input */}
@@ -78,22 +103,22 @@ export default function VerifyOtpPage() {
           />
         </div>
 
-        {/* Time countdown */}
+        {/* Countdown */}
         <p className="text-center text-gray-500 mt-3">
           เหลือเวลา {formatTime(timeLeft)} นาที
         </p>
 
-        {/* Error message */}
+        {/* Errors */}
         {status === "error" && (
           <p className="text-center text-red-500 mt-3">
             รหัสไม่ถูกต้อง หรือหมดอายุ
           </p>
         )}
 
-        {/* Success message */}
+        {/* Success */}
         {status === "success" && (
           <p className="text-center text-green-600 font-semibold mt-3">
-            ยืนยันสำเร็จ ✔
+            ยืนยันสำเร็จ ✔ กำลังนำคุณกลับไปยังระบบ...
           </p>
         )}
 
@@ -104,9 +129,10 @@ export default function VerifyOtpPage() {
           className={`
             w-full py-3 mt-6 rounded-xl text-white text-lg font-medium
             transition-all shadow-md
-            ${timeLeft <= 0
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-blue-600 to-blue-700 hover:shadow-xl"
+            ${
+              timeLeft <= 0
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-blue-600 to-blue-700 hover:shadow-xl"
             }
           `}
         >

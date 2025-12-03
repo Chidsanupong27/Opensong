@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendVerifyEmail } from "../utils/sendEmail";
 
@@ -18,9 +18,23 @@ export default function CommitteePage() {
 
   // 🎯 Mock Backend
   const backendData = {
-    mode: "normal",
-    amount: 20005555,
+    mode: "urgent", //
+    amount: 222,
   };
+  const [committeeStatus, setCommitteeStatus] = useState({});
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("committee_status") || "{}");
+    setCommitteeStatus(saved);
+
+    // listen event เผื่อ UI update เมื่อกลับจากหน้า verify
+    window.addEventListener("storage", () => {
+      const updated = JSON.parse(
+        localStorage.getItem("committee_status") || "{}"
+      );
+      setCommitteeStatus(updated);
+    });
+  }, []);
 
   const config = getCommitteeConfig(backendData);
 
@@ -31,11 +45,31 @@ export default function CommitteePage() {
   });
 
   const committeeEmails = {
-    manager: { name: "นาย A", email: "a@gmail.com" },
-    unitManager: { name: "นาย B", email: "b@gmail.com" },
-    engineer: { name: "นาย C", email: "c@gmail.com" },
-    service: { name: "นาย D", email: "d@gmail.com" },
-    purchasing: { name: "นาย E", email: "e@gmail.com" },
+    manager: {
+      role: "ผู้จัดการเจ้าของงาน",
+      name: "นาย A",
+      email: "a@gmail.com",
+    },
+    unitManager: {
+      role: "ผู้จัดการต้นสังกัด",
+      name: "นาย B",
+      email: "b@gmail.com",
+    },
+    engineer: {
+      role: "วิศวกร",
+      name: "นาย C",
+      email: "c@gmail.com",
+    },
+    service: {
+      role: "บริการจ้างเหมา",
+      name: "นาย D",
+      email: "d@gmail.com",
+    },
+    purchasing: {
+      role: "พัสดุ",
+      name: "นาย E",
+      email: "e@gmail.com",
+    },
   };
 
   function generateOTP() {
@@ -101,6 +135,7 @@ export default function CommitteePage() {
                   toEmail: person.email,
                   toName: person.name,
                   otp: otp,
+                  role: person.role || roleKey,
                 });
 
                 console.log("ส่งเมลแล้ว →", person.email);
@@ -136,37 +171,37 @@ export default function CommitteePage() {
             key: "manager",
             label: "ผู้จัดการเจ้าของงาน",
             name: "นาย A",
-            status: "confirmed",
+            status: committeeStatus["manager"] || "pending",
           },
           {
             key: "unitManager",
             label: "ผู้จัดการต้นสังกัด",
             name: "นาย B",
-            status: "confirmed",
+            status: committeeStatus["unitManager"] || "pending",
           },
           {
             key: "engineer",
             label: "วิศวกร",
             name: "นาย C",
-            status: "confirmed",
+            status: committeeStatus["engineer"] || "pending",
           },
           {
             key: "service",
             label: "บริการจ้างเหมา",
             name: "นาย D",
-            status: "confirmed",
+            status: committeeStatus["service"] || "pending",
           },
           {
             key: "purchasing",
             label: "พัสดุ",
             name: "นาย E",
-            status: "confirmed",
+            status: committeeStatus["purchasing"] || "pending",
           },
         ]}
       />
 
       {/* ปุ่มเทสการส่งเมลล์ Mockup ไว้ให้เห็นภาพ */}
-      <button
+      {/* <button
         onClick={() => {
           sendVerifyEmail({
             toEmail: "อีเมลของคุณ@gmail.com",
@@ -178,9 +213,8 @@ export default function CommitteePage() {
         }}
         className="bg-blue-600 text-white px-4 py-2 rounded-lg"
       >
-        ทดสอบส่งอีเมล
-      </button>
-      
+        Button Test send Email
+      </button> */}
     </div>
   );
 }
