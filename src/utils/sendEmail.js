@@ -17,10 +17,6 @@
 //   return emailjs.send(serviceID, templateID, params, publicKey);
 // }
 
-
-
-
-
 import emailjs from "@emailjs/browser";
 
 export function sendVerifyEmail({ toEmail, toName, otp, role }) {

@@ -2,7 +2,7 @@ import UploadBox from "./UploadBox";
 import { Eye, Download, File, Building2 } from "lucide-react";
 
 // การ์ดแสดงข้อมูลของ Vendor แต่ละบริษัท เช่น ราคา สถานะ เอกสารแนบ ฯลฯ
-export default function CompanyCard({ company }) {
+export default function CompanyCard({ company, isRecommended }) {
   return (
     <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 relative overflow-hidden">
 
@@ -18,13 +18,18 @@ export default function CompanyCard({ company }) {
 
         {/* ชื่อบริษัท + คำอธิบาย */}
         <div>
-          <h2 className="text-xl font-bold text-gray-800 tracking-wide">
+          <h2 className="text-xl font-bold text-gray-800 tracking-wide flex items-center">
             {company.name}
+
+            {/* ⭐ ป้ายแนะนำ */}
+            {isRecommended && (
+              <span className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-700 border border-yellow-300 rounded-md">
+                ⭐ แนะนำ
+              </span>
+            )}
           </h2>
 
-          <p className="text-sm text-gray-500">
-            ผู้เสนอราคาครั้งนี้
-          </p>
+          <p className="text-sm text-gray-500">ผู้เสนอราคาครั้งนี้</p>
         </div>
       </div>
 
@@ -45,10 +50,10 @@ export default function CompanyCard({ company }) {
           className={`font-medium px-2 py-1 rounded-md text-sm
             ${
               company.status === "ส่งสำเร็จ"
-                ? "text-green-700 bg-green-100"      // สถานะสำเร็จ
+                ? "text-green-700 bg-green-100"
                 : company.status === "รอส่งเอกสาร"
-                ? "text-yellow-700 bg-yellow-100"    // ยังไม่ส่งเอกสาร
-                : "text-blue-700 bg-blue-100"         // default กรณีอื่น ๆ
+                ? "text-yellow-700 bg-yellow-100"
+                : "text-blue-700 bg-blue-100"
             }
           `}
         >
@@ -60,10 +65,8 @@ export default function CompanyCard({ company }) {
       <div className="mt-4">
         <p className="font-medium text-gray-700 mb-2">เอกสารแนบผู้รับเหมา</p>
 
-        {/* Component สำหรับอัปโหลดไฟล์ */}
         <UploadBox label="อัปโหลดใบเสนอราคา" />
 
-        {/* ข้อจำกัดของไฟล์ */}
         <p className="text-xs text-gray-500 mt-1">ขนาดไฟล์ไม่เกิน 10 MB</p>
       </div>
 
@@ -73,26 +76,21 @@ export default function CompanyCard({ company }) {
           <p className="font-medium text-gray-700 mb-2">ไฟล์ที่อัปโหลดแล้ว</p>
 
           <div className="space-y-2">
-            {/* Loop ไฟล์ที่ vendor ส่งมา */}
             {company.files.map((file, index) => (
               <div
                 key={index}
                 className="flex items-center justify-between bg-gray-50 border rounded-lg px-3 py-2"
               >
-                {/* แสดงชื่อไฟล์ */}
                 <div className="flex items-center gap-2">
                   <File className="w-5 h-5 text-gray-500" />
                   <span className="text-gray-700 text-sm">{file.name}</span>
                 </div>
 
-                {/* ปุ่ม ดูไฟล์ และ ดาวน์โหลด */}
+                {/* ปุ่มดูไฟล์ + ดาวน์โหลด */}
                 <div className="flex items-center gap-3">
-                  {/* ปุ่มดูไฟล์ */}
                   <button className="text-blue-600 hover:underline flex items-center gap-1">
                     <Eye className="w-4 h-4" /> ดู
                   </button>
-
-                  {/* ปุ่มดาวน์โหลด */}
                   <button className="text-green-600 hover:underline flex items-center gap-1">
                     <Download className="w-4 h-4" /> ดาวน์โหลด
                   </button>

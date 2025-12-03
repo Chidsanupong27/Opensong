@@ -6,10 +6,13 @@ import { BarChart2 } from "lucide-react";
 export default function BidOverviewPage() {
   const medianPrice = "22,014.72";
 
+  // -----------------------------
+  // 1) ข้อมูล vendor (mock)
+  // -----------------------------
   const companies = [
     {
       name: "บริษัท AAA จำกัด",
-      price: "22,500",
+      price: "22500",
       status: "ส่งสำเร็จ",
       files: [
         { name: "ใบเสนอราคา.pdf", url: "#" },
@@ -18,11 +21,23 @@ export default function BidOverviewPage() {
     },
     {
       name: "บริษัท BBB จำกัด",
-      price: "00,000",
+      price: "21000",
       status: "รอเสนอราคา",
-      files: [], // ยังไม่มีไฟล์
+      files: [],
     },
   ];
+
+  // -----------------------------
+  // 2) หา lowest price vendor
+  // -----------------------------
+  const lowestPrice = Math.min(...companies.map((c) => Number(c.price)));
+
+  // -----------------------------
+  // 3) เรียง vendor ให้ราคาต่ำสุดขึ้นก่อน
+  // -----------------------------
+  const sortedCompanies = [...companies].sort(
+    (a, b) => Number(a.price) - Number(b.price)
+  );
 
   return (
     <div className="min-h-screen bg-[#f5f7fb] pb-20">
@@ -42,9 +57,14 @@ export default function BidOverviewPage() {
         <InfoBox value={medianPrice} />
       </div>
 
+      {/* รายการ vendor */}
       <div className="max-w-6xl mx-auto mt-6 grid gap-6">
-        {companies.map((c, i) => (
-          <CompanyCard key={i} company={c} />
+        {sortedCompanies.map((c, i) => (
+          <CompanyCard
+            key={i}
+            company={c}
+            isRecommended={Number(c.price) === lowestPrice}
+          />
         ))}
       </div>
     </div>
