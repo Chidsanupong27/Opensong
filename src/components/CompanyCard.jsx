@@ -1,29 +1,38 @@
-import UploadBox from "./UploadBox"; 
-import { Eye, Download, File, Building2 } from "lucide-react";
+import { Eye, Download, File, Building2, RefreshCcw } from "lucide-react";
 
-// การ์ดแสดงข้อมูลของ Vendor แต่ละบริษัท เช่น ราคา สถานะ เอกสารแนบ ฯลฯ
-export default function CompanyCard({ company, isRecommended }) {
+export default function CompanyCard({
+  company,
+  isRecommended,
+  medianPrice,
+  onRequestReprice,
+}) {
+  // parse number เผื่อราคามี comma เช่น "25,000"
+  const median = Number(String(medianPrice).replace(/,/g, ""));
+  const price = Number(String(company.price).replace(/,/g, ""));
+
+  // เงื่อนไขใหม่ : ขอราคาใหม่ถ้ามากกว่าราคากลาง
+  const shouldReprice =
+    price > median && !company.status.includes("ปรับราคาใหม่");
+
   return (
     <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 relative overflow-hidden">
 
-      {/* แถบสีน้ำเงินด้านซ้ายเพื่อเป็น Accent Decoration */}
+      {/* แถบสีน้ำเงินซ้าย */}
       <div className="absolute left-0 top-0 h-full w-1.5 bg-blue-600 rounded-l-xl"></div>
 
-      {/* ส่วนหัวของการ์ด: ชื่อบริษัท + ไอคอน */}
+      {/* หัวการ์ด */}
       <div className="flex items-center gap-3 mb-4">
-        {/* ไอคอนบริษัท */}
         <div className="p-2 bg-blue-50 rounded-lg">
           <Building2 className="w-6 h-6 text-blue-600" />
         </div>
 
-        {/* ชื่อบริษัท + คำอธิบาย */}
         <div>
-          <h2 className="text-xl font-bold text-gray-800 tracking-wide flex items-center">
+          <h2 className="text-xl font-bold text-gray-800 tracking-wide flex items-center gap-2">
             {company.name}
 
-            {/* ⭐ ป้ายแนะนำ */}
+            {/* ⭐ แนะนำ */}
             {isRecommended && (
-              <span className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-700 border border-yellow-300 rounded-md">
+              <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 border border-yellow-300 rounded-md">
                 ⭐ แนะนำ
               </span>
             )}
@@ -33,44 +42,47 @@ export default function CompanyCard({ company, isRecommended }) {
         </div>
       </div>
 
-      {/* แสดงราคาเสนอ */}
-      <div className="mt-1">
-        <p className="text-gray-600">
-          ราคาเสนอ:{" "}
-          <span className="text-lg font-semibold text-[#0B3C8A]">
-            {company.price} บาท
-          </span>
-        </p>
-      </div>
+      {/* ราคา */}
+      <p className="text-gray-600 mt-1">
+        ราคาเสนอ:{" "}
+        <span className="text-lg font-semibold text-[#0B3C8A]">
+          {Number(price).toLocaleString()} บาท
+        </span>
+      </p>
 
-      {/* แสดงสถานะ เช่น ส่งสำเร็จ / รอส่งเอกสาร */}
+      {/* สถานะ */}
       <p className="text-gray-600 mt-1">
         สถานะ:{" "}
         <span
           className={`font-medium px-2 py-1 rounded-md text-sm
             ${
-              company.status === "ส่งสำเร็จ"
+              company.status.includes("ปรับราคาใหม่")
+                ? "text-purple-700 bg-purple-100"
+                : company.status === "ส่งสำเร็จ"
                 ? "text-green-700 bg-green-100"
-                : company.status === "รอส่งเอกสาร"
+                : company.status === "รอเสนอราคา"
                 ? "text-yellow-700 bg-yellow-100"
                 : "text-blue-700 bg-blue-100"
-            }
-          `}
+            }`}
         >
           {company.status}
         </span>
       </p>
 
-      {/* ส่วน Upload เอกสาร โดยผู้รับเหมาสามารถอัปโหลดใบเสนอราคาได้ */}
-      <div className="mt-4">
-        <p className="font-medium text-gray-700 mb-2">เอกสารแนบผู้รับเหมา</p>
+      {/* ปุ่มขอปรับราคาใหม่ */}
+      {shouldReprice && (
+        <button
+          onClick={() => onRequestReprice(company)}
+          className="mt-4 w-full flex justify-center items-center gap-2 
+                     bg-red-50 border border-red-300 text-red-700 
+                     px-3 py-2 rounded-lg font-medium hover:bg-red-100"
+        >
+          <RefreshCcw className="w-4 h-4" />
+          ขอปรับราคาใหม่
+        </button>
+      )}
 
-        <UploadBox label="อัปโหลดใบเสนอราคา" />
-
-        <p className="text-xs text-gray-500 mt-1">ขนาดไฟล์ไม่เกิน 10 MB</p>
-      </div>
-
-      {/* แสดงรายการไฟล์ที่อัปโหลดแล้ว (ถ้ามี) */}
+      {/* ไฟล์แนบ */}
       {company.files && company.files.length > 0 && (
         <div className="mt-6">
           <p className="font-medium text-gray-700 mb-2">ไฟล์ที่อัปโหลดแล้ว</p>
@@ -86,7 +98,6 @@ export default function CompanyCard({ company, isRecommended }) {
                   <span className="text-gray-700 text-sm">{file.name}</span>
                 </div>
 
-                {/* ปุ่มดูไฟล์ + ดาวน์โหลด */}
                 <div className="flex items-center gap-3">
                   <button className="text-blue-600 hover:underline flex items-center gap-1">
                     <Eye className="w-4 h-4" /> ดู
@@ -100,7 +111,6 @@ export default function CompanyCard({ company, isRecommended }) {
           </div>
         </div>
       )}
-
     </div>
   );
 }
